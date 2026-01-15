@@ -6,3 +6,411 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// ============================================
+// Core Data Tables
+// ============================================
+
+model User {
+  id               Int       @id @default(autoincrement())
+  googleId         String    @unique @map("google_id")
+  email            String
+  name             String
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  isPremium        Boolean   @default(false) @map("is_premium")
+  stripeCustomerId String?   @map("stripe_customer_id")
+
+  // Relations
+  admin                          Admin?
+  createdPersons                 Person[]                       @relation("PersonCreatedBy")
+  deletedPersons                 Person[]                       @relation("PersonDeletedBy")
+  createdPieces                  Piece[]                        @relation("PieceCreatedBy")
+  deletedPieces                  Piece[]                        @relation("PieceDeletedBy")
+  createdTags                    Tag[]                          @relation("TagCreatedBy")
+  deletedTags                    Tag[]                          @relation("TagDeletedBy")
+  createdPieceTags               PieceTag[]
+  createdYoutubeVideos           YoutubeVideo[]                 @relation("YoutubeVideoCreatedBy")
+  approvedYoutubeVideos          YoutubeVideo[]                 @relation("YoutubeVideoApprovedBy")
+  deletedYoutubeVideos           YoutubeVideo[]                 @relation("YoutubeVideoDeletedBy")
+  favorites                      Favorite[]
+  editRequestsPersonCreate       EditRequestPersonCreate[]      @relation("PersonCreateCreatedBy")
+  reviewedPersonCreate           EditRequestPersonCreate[]      @relation("PersonCreateReviewedBy")
+  editRequestsPersonUpdate       EditRequestPersonUpdate[]      @relation("PersonUpdateCreatedBy")
+  reviewedPersonUpdate           EditRequestPersonUpdate[]      @relation("PersonUpdateReviewedBy")
+  editRequestsPersonNameAdd      EditRequestPersonNameAdd[]     @relation("PersonNameAddCreatedBy")
+  reviewedPersonNameAdd          EditRequestPersonNameAdd[]     @relation("PersonNameAddReviewedBy")
+  editRequestsPersonNameDelete   EditRequestPersonNameDelete[]  @relation("PersonNameDeleteCreatedBy")
+  reviewedPersonNameDelete       EditRequestPersonNameDelete[]  @relation("PersonNameDeleteReviewedBy")
+  editRequestsPieceCreate        EditRequestPieceCreate[]       @relation("PieceCreateCreatedBy")
+  reviewedPieceCreate            EditRequestPieceCreate[]       @relation("PieceCreateReviewedBy")
+  editRequestsPieceUpdate        EditRequestPieceUpdate[]       @relation("PieceUpdateCreatedBy")
+  reviewedPieceUpdate            EditRequestPieceUpdate[]       @relation("PieceUpdateReviewedBy")
+  editRequestsPieceNameAdd       EditRequestPieceNameAdd[]      @relation("PieceNameAddCreatedBy")
+  reviewedPieceNameAdd           EditRequestPieceNameAdd[]      @relation("PieceNameAddReviewedBy")
+  editRequestsPieceNameDelete    EditRequestPieceNameDelete[]   @relation("PieceNameDeleteCreatedBy")
+  reviewedPieceNameDelete        EditRequestPieceNameDelete[]   @relation("PieceNameDeleteReviewedBy")
+
+  @@map("users")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("admins")
+}
+
+model Person {
+  id              Int       @id @default(autoincrement())
+  bio             String?   @db.Text
+  birthYear       Int?      @map("birth_year")
+  deathYear       Int?      @map("death_year")
+  country         String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdByUserId Int       @map("created_by_user_id")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedByUserId Int?      @map("deleted_by_user_id")
+
+  createdByUser User  @relation("PersonCreatedBy", fields: [createdByUserId], references: [id])
+  deletedByUser User? @relation("PersonDeletedBy", fields: [deletedByUserId], references: [id])
+
+  personNames                PersonName[]
+  composedPieces             Piece[]                   @relation("PieceComposer")
+  arrangedPieces             Piece[]                   @relation("PieceArranger")
+  editRequestsPersonUpdate   EditRequestPersonUpdate[]
+  editRequestsPersonNameAdd  EditRequestPersonNameAdd[]
+  editRequestsPieceCreate    EditRequestPieceCreate[]  @relation("PieceCreateComposer")
+  editRequestsPieceCreateArr EditRequestPieceCreate[]  @relation("PieceCreateArranger")
+  editRequestsPieceUpdate    EditRequestPieceUpdate[]  @relation("PieceUpdateComposer")
+  editRequestsPieceUpdateArr EditRequestPieceUpdate[]  @relation("PieceUpdateArranger")
+  createdFromRequest         EditRequestPersonCreate[]
+
+  @@map("persons")
+}
+
+model PersonName {
+  id        Int       @id @default(autoincrement())
+  personId  Int       @map("person_id")
+  name      String    @db.VarChar(500)
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  person                        Person                        @relation(fields: [personId], references: [id])
+  editRequestsPersonNameDelete  EditRequestPersonNameDelete[]
+  createdFromRequest            EditRequestPersonNameAdd[]
+
+  @@index([name])
+  @@map("person_names")
+}
+
+model Piece {
+  id              Int       @id @default(autoincrement())
+  composerId      Int       @map("composer_id")
+  arrangerId      Int?      @map("arranger_id")
+  parentPieceId   Int?      @map("parent_piece_id")
+  compositionYear Int?      @map("composition_year")
+  sheetMusicInfo  String?   @map("sheet_music_info") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdByUserId Int       @map("created_by_user_id")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedByUserId Int?      @map("deleted_by_user_id")
+
+  composer      Person  @relation("PieceComposer", fields: [composerId], references: [id])
+  arranger      Person? @relation("PieceArranger", fields: [arrangerId], references: [id])
+  parentPiece   Piece?  @relation("PieceParent", fields: [parentPieceId], references: [id])
+  childPieces   Piece[] @relation("PieceParent")
+  createdByUser User    @relation("PieceCreatedBy", fields: [createdByUserId], references: [id])
+  deletedByUser User?   @relation("PieceDeletedBy", fields: [deletedByUserId], references: [id])
+
+  pieceNames                 PieceName[]
+  pieceTags                  PieceTag[]
+  youtubeVideos              YoutubeVideo[]
+  favorites                  Favorite[]
+  editRequestsPieceUpdate    EditRequestPieceUpdate[]
+  editRequestsPieceNameAdd   EditRequestPieceNameAdd[]
+  editRequestsPieceCreate    EditRequestPieceCreate[]  @relation("PieceCreateParent")
+  editRequestsPieceUpdatePar EditRequestPieceUpdate[]  @relation("PieceUpdateParent")
+  createdFromRequest         EditRequestPieceCreate[]  @relation("PieceCreateCreated")
+
+  @@index([composerId])
+  @@index([arrangerId])
+  @@index([parentPieceId])
+  @@map("pieces")
+}
+
+model PieceName {
+  id        Int       @id @default(autoincrement())
+  pieceId   Int       @map("piece_id")
+  name      String    @db.VarChar(500)
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  piece                       Piece                       @relation(fields: [pieceId], references: [id])
+  editRequestsPieceNameDelete EditRequestPieceNameDelete[]
+  createdFromRequest          EditRequestPieceNameAdd[]
+
+  @@index([name])
+  @@map("piece_names")
+}
+
+model Tag {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdByUserId Int       @map("created_by_user_id")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedByUserId Int?      @map("deleted_by_user_id")
+
+  createdByUser User       @relation("TagCreatedBy", fields: [createdByUserId], references: [id])
+  deletedByUser User?      @relation("TagDeletedBy", fields: [deletedByUserId], references: [id])
+  pieceTags     PieceTag[]
+
+  @@map("tags")
+}
+
+model PieceTag {
+  id              Int       @id @default(autoincrement())
+  pieceId         Int       @map("piece_id")
+  tagId           Int       @map("tag_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdByUserId Int       @map("created_by_user_id")
+  deletedAt       DateTime? @map("deleted_at")
+
+  piece         Piece @relation(fields: [pieceId], references: [id])
+  tag           Tag   @relation(fields: [tagId], references: [id])
+  createdByUser User  @relation(fields: [createdByUserId], references: [id])
+
+  @@unique([pieceId, tagId])
+  @@index([pieceId])
+  @@index([tagId])
+  @@map("piece_tags")
+}
+
+model YoutubeVideo {
+  id               Int            @id @default(autoincrement())
+  pieceId          Int            @map("piece_id")
+  url              String         @db.VarChar(500)
+  approvalStatus   ApprovalStatus @default(pending) @map("approval_status")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  createdByUserId  Int            @map("created_by_user_id")
+  approvedByAdminId Int?          @map("approved_by_admin_id")
+  deletedAt        DateTime?      @map("deleted_at")
+  deletedByUserId  Int?           @map("deleted_by_user_id")
+
+  piece           Piece  @relation(fields: [pieceId], references: [id])
+  createdByUser   User   @relation("YoutubeVideoCreatedBy", fields: [createdByUserId], references: [id])
+  approvedByAdmin User?  @relation("YoutubeVideoApprovedBy", fields: [approvedByAdminId], references: [id])
+  deletedByUser   User?  @relation("YoutubeVideoDeletedBy", fields: [deletedByUserId], references: [id])
+
+  @@index([pieceId])
+  @@index([approvalStatus])
+  @@map("youtube_videos")
+}
+
+model Favorite {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  pieceId   Int       @map("piece_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user  User  @relation(fields: [userId], references: [id])
+  piece Piece @relation(fields: [pieceId], references: [id])
+
+  @@unique([userId, pieceId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+// ============================================
+// Edit Request Tables
+// ============================================
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+model EditRequestPersonCreate {
+  id                Int            @id @default(autoincrement())
+  names             Json
+  bio               String?        @db.Text
+  birthYear         Int?           @map("birth_year")
+  deathYear         Int?           @map("death_year")
+  country           String?
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+  createdPersonId   Int?           @map("created_person_id")
+
+  createdByUser   User    @relation("PersonCreateCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?   @relation("PersonCreateReviewedBy", fields: [reviewedByAdminId], references: [id])
+  createdPerson   Person? @relation(fields: [createdPersonId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_person_create")
+}
+
+model EditRequestPersonUpdate {
+  id                Int            @id @default(autoincrement())
+  personId          Int            @map("person_id")
+  bio               String?        @db.Text
+  birthYear         Int?           @map("birth_year")
+  deathYear         Int?           @map("death_year")
+  country           String?
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+
+  person          Person @relation(fields: [personId], references: [id])
+  createdByUser   User   @relation("PersonUpdateCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?  @relation("PersonUpdateReviewedBy", fields: [reviewedByAdminId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_person_update")
+}
+
+model EditRequestPersonNameAdd {
+  id                  Int            @id @default(autoincrement())
+  personId            Int            @map("person_id")
+  name                String         @db.VarChar(500)
+  status              ApprovalStatus @default(pending)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  createdByUserId     Int            @map("created_by_user_id")
+  reviewedAt          DateTime?      @map("reviewed_at")
+  reviewedByAdminId   Int?           @map("reviewed_by_admin_id")
+  reviewComment       String?        @map("review_comment") @db.Text
+  createdPersonNameId Int?           @map("created_person_name_id")
+
+  person            Person      @relation(fields: [personId], references: [id])
+  createdByUser     User        @relation("PersonNameAddCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin   User?       @relation("PersonNameAddReviewedBy", fields: [reviewedByAdminId], references: [id])
+  createdPersonName PersonName? @relation(fields: [createdPersonNameId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_person_name_add")
+}
+
+model EditRequestPersonNameDelete {
+  id                Int            @id @default(autoincrement())
+  personNameId      Int            @map("person_name_id")
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+
+  personName      PersonName @relation(fields: [personNameId], references: [id])
+  createdByUser   User       @relation("PersonNameDeleteCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?      @relation("PersonNameDeleteReviewedBy", fields: [reviewedByAdminId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_person_name_delete")
+}
+
+model EditRequestPieceCreate {
+  id                Int            @id @default(autoincrement())
+  names             Json
+  composerId        Int            @map("composer_id")
+  arrangerId        Int?           @map("arranger_id")
+  parentPieceId     Int?           @map("parent_piece_id")
+  compositionYear   Int?           @map("composition_year")
+  sheetMusicInfo    String?        @map("sheet_music_info") @db.Text
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+  createdPieceId    Int?           @map("created_piece_id")
+
+  composer        Person  @relation("PieceCreateComposer", fields: [composerId], references: [id])
+  arranger        Person? @relation("PieceCreateArranger", fields: [arrangerId], references: [id])
+  parentPiece     Piece?  @relation("PieceCreateParent", fields: [parentPieceId], references: [id])
+  createdByUser   User    @relation("PieceCreateCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?   @relation("PieceCreateReviewedBy", fields: [reviewedByAdminId], references: [id])
+  createdPiece    Piece?  @relation("PieceCreateCreated", fields: [createdPieceId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_piece_create")
+}
+
+model EditRequestPieceUpdate {
+  id                Int            @id @default(autoincrement())
+  pieceId           Int            @map("piece_id")
+  composerId        Int?           @map("composer_id")
+  arrangerId        Int?           @map("arranger_id")
+  parentPieceId     Int?           @map("parent_piece_id")
+  compositionYear   Int?           @map("composition_year")
+  sheetMusicInfo    String?        @map("sheet_music_info") @db.Text
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+
+  piece           Piece   @relation(fields: [pieceId], references: [id])
+  composer        Person? @relation("PieceUpdateComposer", fields: [composerId], references: [id])
+  arranger        Person? @relation("PieceUpdateArranger", fields: [arrangerId], references: [id])
+  parentPiece     Piece?  @relation("PieceUpdateParent", fields: [parentPieceId], references: [id])
+  createdByUser   User    @relation("PieceUpdateCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?   @relation("PieceUpdateReviewedBy", fields: [reviewedByAdminId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_piece_update")
+}
+
+model EditRequestPieceNameAdd {
+  id                 Int            @id @default(autoincrement())
+  pieceId            Int            @map("piece_id")
+  name               String         @db.VarChar(500)
+  status             ApprovalStatus @default(pending)
+  createdAt          DateTime       @default(now()) @map("created_at")
+  createdByUserId    Int            @map("created_by_user_id")
+  reviewedAt         DateTime?      @map("reviewed_at")
+  reviewedByAdminId  Int?           @map("reviewed_by_admin_id")
+  reviewComment      String?        @map("review_comment") @db.Text
+  createdPieceNameId Int?           @map("created_piece_name_id")
+
+  piece            Piece      @relation(fields: [pieceId], references: [id])
+  createdByUser    User       @relation("PieceNameAddCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin  User?      @relation("PieceNameAddReviewedBy", fields: [reviewedByAdminId], references: [id])
+  createdPieceName PieceName? @relation(fields: [createdPieceNameId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_piece_name_add")
+}
+
+model EditRequestPieceNameDelete {
+  id                Int            @id @default(autoincrement())
+  pieceNameId       Int            @map("piece_name_id")
+  status            ApprovalStatus @default(pending)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  createdByUserId   Int            @map("created_by_user_id")
+  reviewedAt        DateTime?      @map("reviewed_at")
+  reviewedByAdminId Int?           @map("reviewed_by_admin_id")
+  reviewComment     String?        @map("review_comment") @db.Text
+
+  pieceName       PieceName @relation(fields: [pieceNameId], references: [id])
+  createdByUser   User      @relation("PieceNameDeleteCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedByAdmin User?     @relation("PieceNameDeleteReviewedBy", fields: [reviewedByAdminId], references: [id])
+
+  @@index([status])
+  @@map("edit_requests_piece_name_delete")
+}

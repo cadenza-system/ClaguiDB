@@ -1,16 +1,26 @@
-import { Typography, Container, Box } from '@mui/material';
+import { Typography, Box, Grid } from '@mui/material';
+import { MainLayout } from '@/components/templates/MainLayout';
+import { PieceRepository } from '@/infrastructure/repositories/piece.repository';
+import { TagRepository } from '@/infrastructure/repositories/tag.repository';
+import { HomeClient } from './HomeClient';
 
-export default function Home() {
+export default async function HomePage() {
+  const pieceRepository = new PieceRepository();
+  const tagRepository = new TagRepository();
+
+  const [recentPieces, popularPieces, tags] = await Promise.all([
+    pieceRepository.findRecent(6),
+    pieceRepository.findPopular(6),
+    tagRepository.findAll(),
+  ]);
+
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Classical Guitar Wiki
-        </Typography>
-        <Typography variant="body1">
-          クラシックギターの楽曲と作曲家を管理するWikiアプリケーション
-        </Typography>
-      </Box>
-    </Container>
+    <MainLayout>
+      <HomeClient
+        recentPieces={recentPieces}
+        popularPieces={popularPieces}
+        tags={tags}
+      />
+    </MainLayout>
   );
 }
