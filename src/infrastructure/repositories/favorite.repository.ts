@@ -2,6 +2,14 @@ import { prisma } from '../database/prisma';
 import { IFavoriteRepository } from '@/domain/favorite/favorite.repository.interface';
 import { Favorite } from '@/domain/favorite/favorite.entity';
 
+type FavoriteModel = {
+  id: number;
+  userId: number;
+  pieceId: number;
+  createdAt: Date;
+  deletedAt: Date | null;
+};
+
 export class FavoriteRepository implements IFavoriteRepository {
   async findByUserId(userId: number): Promise<Favorite[]> {
     const favorites = await prisma.favorite.findMany({
@@ -9,7 +17,7 @@ export class FavoriteRepository implements IFavoriteRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return favorites.map((f) => this.toDomain(f));
+    return favorites.map((f: FavoriteModel) => this.toDomain(f));
   }
 
   async findByUserAndPiece(
@@ -60,12 +68,7 @@ export class FavoriteRepository implements IFavoriteRepository {
     });
   }
 
-  private toDomain(prismaModel: {
-    id: number;
-    userId: number;
-    pieceId: number;
-    createdAt: Date;
-  }): Favorite {
+  private toDomain(prismaModel: FavoriteModel): Favorite {
     return new Favorite(
       prismaModel.id,
       prismaModel.userId,

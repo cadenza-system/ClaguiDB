@@ -27,9 +27,9 @@ export default async function PersonDetailPage({ params }: Props) {
   return (
     <MainLayout>
       <PersonDetailClient
-        person={person}
-        composedPieces={composedPieces}
-        arrangedPieces={arrangedPieces}
+        person={person.toSerializable()}
+        composedPieces={composedPieces.map((p) => p.toSerializable())}
+        arrangedPieces={arrangedPieces.map((p) => p.toSerializable())}
       />
     </MainLayout>
   );

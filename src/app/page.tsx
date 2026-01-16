@@ -1,4 +1,3 @@
-import { Typography, Box, Grid } from '@mui/material';
 import { MainLayout } from '@/components/templates/MainLayout';
 import { PieceRepository } from '@/infrastructure/repositories/piece.repository';
 import { TagRepository } from '@/infrastructure/repositories/tag.repository';
@@ -17,9 +16,9 @@ export default async function HomePage() {
   return (
     <MainLayout>
       <HomeClient
-        recentPieces={recentPieces}
-        popularPieces={popularPieces}
-        tags={tags}
+        recentPieces={recentPieces.map((p) => p.toSerializable())}
+        popularPieces={popularPieces.map((p) => p.toSerializable())}
+        tags={tags.map((t) => t.toSerializable())}
       />
     </MainLayout>
   );

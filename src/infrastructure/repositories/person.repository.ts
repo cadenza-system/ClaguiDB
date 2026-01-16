@@ -8,6 +8,17 @@ import {
   PersonSearchCriteria,
 } from '@/domain/person/person.types';
 
+type PersonModel = {
+  id: number;
+  bio: string | null;
+  birthYear: number | null;
+  deathYear: number | null;
+  country: string | null;
+  createdAt: Date;
+  createdByUserId: number;
+  personNames: { name: string }[];
+};
+
 export class PersonRepository implements IPersonRepository {
   async findById(id: PersonId): Promise<Person | null> {
     const person = await prisma.person.findUnique({
@@ -50,7 +61,7 @@ export class PersonRepository implements IPersonRepository {
       skip: criteria.offset,
     });
 
-    return persons.map((p) => this.toDomain(p));
+    return persons.map((p: PersonModel) => this.toDomain(p));
   }
 
   async create(input: CreatePersonInput): Promise<Person> {
@@ -118,16 +129,7 @@ export class PersonRepository implements IPersonRepository {
     });
   }
 
-  private toDomain(prismaModel: {
-    id: number;
-    bio: string | null;
-    birthYear: number | null;
-    deathYear: number | null;
-    country: string | null;
-    createdAt: Date;
-    createdByUserId: number;
-    personNames: { name: string }[];
-  }): Person {
+  private toDomain(prismaModel: PersonModel): Person {
     return new Person(
       prismaModel.id,
       prismaModel.personNames.map((pn) => pn.name),

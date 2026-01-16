@@ -1,14 +1,34 @@
 'use client';
-import { Typography, Box, Grid, Chip, Divider, Paper } from '@mui/material';
-import { Person } from '@/domain/person';
-import { Piece } from '@/domain/piece';
+import { Typography, Box, Grid, Chip, Paper } from '@mui/material';
+import { SerializedPerson } from '@/domain/person';
+import { SerializedPiece } from '@/domain/piece';
 import { PieceCard } from '@/components/molecules/PieceCard';
 import { useLanguage } from '@/hooks/useLanguage';
 
+function isJapanese(text: string): boolean {
+  return /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
+}
+
+function getJapaneseMainName(names: string[]): string | null {
+  const japaneseNames = names.filter((name) => isJapanese(name)).sort();
+  return japaneseNames[0] || null;
+}
+
+function getEnglishMainName(names: string[]): string | null {
+  const englishNames = names.filter((name) => !isJapanese(name)).sort();
+  return englishNames[0] || null;
+}
+
+function getMainName(names: string[], language: 'ja' | 'en'): string {
+  const mainName =
+    language === 'ja' ? getJapaneseMainName(names) : getEnglishMainName(names);
+  return mainName || names[0] || '';
+}
+
 interface PersonDetailClientProps {
-  person: Person;
-  composedPieces: Piece[];
-  arrangedPieces: Piece[];
+  person: SerializedPerson;
+  composedPieces: SerializedPiece[];
+  arrangedPieces: SerializedPiece[];
 }
 
 export function PersonDetailClient({
@@ -17,11 +37,11 @@ export function PersonDetailClient({
   arrangedPieces,
 }: PersonDetailClientProps) {
   const { language } = useLanguage();
-  const mainName = person.getMainName(language);
+  const mainName = getMainName(person.names, language);
   const subName =
     language === 'ja'
-      ? person.getEnglishMainName()
-      : person.getJapaneseMainName();
+      ? getEnglishMainName(person.names)
+      : getJapaneseMainName(person.names);
 
   return (
     <Box>

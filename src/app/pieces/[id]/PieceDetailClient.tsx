@@ -6,22 +6,40 @@ import {
   Chip,
   Paper,
   Card,
-  CardContent,
 } from '@mui/material';
 import NextLink from 'next/link';
-import { PieceWithRelations, Piece } from '@/domain/piece';
-import { Person } from '@/domain/person';
-import { YoutubeVideo } from '@/domain/youtube';
+import { SerializedPieceWithRelations, SerializedPiece } from '@/domain/piece';
+import { SerializedPerson } from '@/domain/person';
+import { SerializedYoutubeVideo } from '@/domain/youtube';
 import { TagChip } from '@/components/molecules/TagChip';
 import { PieceCard } from '@/components/molecules/PieceCard';
 import { useLanguage } from '@/hooks/useLanguage';
 
+function isJapanese(text: string): boolean {
+  return /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
+}
+
+function getMainName(names: string[], language: 'ja' | 'en'): string {
+  const sorted = [...names].sort();
+  if (language === 'ja') {
+    return sorted.find((n) => isJapanese(n)) || sorted[0] || '';
+  }
+  return sorted.find((n) => !isJapanese(n)) || sorted[0] || '';
+}
+
+function getVideoId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match ? match[1] : null;
+}
+
 interface PieceDetailClientProps {
-  piece: PieceWithRelations;
-  composer: Person | null;
-  arranger: Person | null;
-  childPieces: Piece[];
-  videos: YoutubeVideo[];
+  piece: SerializedPieceWithRelations;
+  composer: SerializedPerson | null;
+  arranger: SerializedPerson | null;
+  childPieces: SerializedPiece[];
+  videos: SerializedYoutubeVideo[];
 }
 
 export function PieceDetailClient({
@@ -33,20 +51,10 @@ export function PieceDetailClient({
 }: PieceDetailClientProps) {
   const { language } = useLanguage();
 
-  const getMainName = (names: string[]) => {
-    const isJapanese = (text: string) =>
-      /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
-    const sorted = [...names].sort();
-    if (language === 'ja') {
-      return sorted.find((n) => isJapanese(n)) || sorted[0] || '';
-    }
-    return sorted.find((n) => !isJapanese(n)) || sorted[0] || '';
-  };
-
-  const mainName = getMainName(piece.names);
+  const mainName = getMainName(piece.names, language);
   const subNames = piece.names.filter((n) => n !== mainName);
-  const composerName = composer?.getMainName(language) || '';
-  const arrangerName = arranger?.getMainName(language);
+  const composerName = composer ? getMainName(composer.names, language) : '';
+  const arrangerName = arranger ? getMainName(arranger.names, language) : null;
 
   return (
     <Box>
@@ -149,7 +157,7 @@ export function PieceDetailClient({
           </Typography>
           <Grid container spacing={2}>
             {videos.map((video) => {
-              const videoId = video.getVideoId();
+              const videoId = getVideoId(video.url);
               return (
                 <Grid item xs={12} sm={6} key={video.id}>
                   <Card>

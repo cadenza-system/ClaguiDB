@@ -1,15 +1,15 @@
 'use client';
-import { Typography, Box, Grid, Paper } from '@mui/material';
+import { Typography, Box, Grid } from '@mui/material';
 import { PieceCard } from '@/components/molecules/PieceCard';
 import { TagChip } from '@/components/molecules/TagChip';
-import { Piece } from '@/domain/piece';
-import { Tag } from '@/domain/tag';
+import { SerializedPiece } from '@/domain/piece';
+import { SerializedTag } from '@/domain/tag';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface HomeClientProps {
-  recentPieces: Piece[];
-  popularPieces: Piece[];
-  tags: Tag[];
+  recentPieces: SerializedPiece[];
+  popularPieces: SerializedPiece[];
+  tags: SerializedTag[];
 }
 
 export function HomeClient({
