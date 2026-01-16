@@ -1,4 +1,3 @@
-import { YoutubeVideo } from '@/domain/youtube/youtube-video.entity';
 import { createYoutubeVideo } from '../../../helpers/factories';
 
 describe('YoutubeVideo Entity', () => {

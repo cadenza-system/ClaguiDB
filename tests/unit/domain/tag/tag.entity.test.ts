@@ -1,4 +1,3 @@
-import { Tag } from '@/domain/tag/tag.entity';
 import { createTag } from '../../../helpers/factories';
 
 describe('Tag Entity', () => {

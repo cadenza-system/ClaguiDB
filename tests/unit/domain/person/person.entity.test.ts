@@ -1,4 +1,3 @@
-import { Person } from '@/domain/person/person.entity';
 import { createPerson } from '../../../helpers/factories';
 
 describe('Person Entity', () => {

@@ -1,4 +1,3 @@
-import { Piece } from '@/domain/piece/piece.entity';
 import { createPiece } from '../../../helpers/factories';
 
 describe('Piece Entity', () => {
