@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import { PieceCard } from '@/components/molecules/PieceCard';
 import { SerializedPiece } from '@/domain/piece';
+import { render, screen } from '@testing-library/react';
 
 // Next.js Link をモック
 jest.mock('next/link', () => {
@@ -11,7 +11,9 @@ jest.mock('next/link', () => {
 
 // TagChipをモックしてネストしたリンクを回避
 jest.mock('@/components/molecules/TagChip', () => ({
-  TagChip: ({ name }: { name: string }) => <span data-testid="tag">{name}</span>,
+  TagChip: ({ name }: { name: string }) => (
+    <span data-testid="tag">{name}</span>
+  ),
 }));
 
 describe('PieceCard', () => {
@@ -101,11 +103,7 @@ describe('PieceCard', () => {
 
   it('編曲者名が渡された場合、表示される', () => {
     render(
-      <PieceCard
-        piece={mockPiece}
-        language="ja"
-        arrangerName="セゴビア"
-      />
+      <PieceCard piece={mockPiece} language="ja" arrangerName="セゴビア" />
     );
 
     expect(screen.getByText('(arr. セゴビア)')).toBeInTheDocument();
