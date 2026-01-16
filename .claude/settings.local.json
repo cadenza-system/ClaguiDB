@@ -5,7 +5,15 @@
       "Bash(python:*)",
       "Bash(pdftotext:*)",
       "Bash(npm run build:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
+      "Bash(npm search:*)",
+      "WebSearch",
+      "Bash(nvm install:*)",
+      "Bash(nvm use:*)",
+      "WebFetch(domain:www.prisma.io)",
+      "Bash(npm ls:*)"
     ]
   }
 }
