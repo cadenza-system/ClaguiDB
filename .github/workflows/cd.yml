@@ -9,8 +9,9 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    # Only run on master/main branch
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,8 +33,6 @@ jobs:
 
       - name: Build
         run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # Docker build and push (if using Docker)
       - name: Set up Docker Buildx
