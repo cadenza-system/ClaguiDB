@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/templates/MainLayout';
 import { PieceRepository } from '@/infrastructure/repositories/piece.repository';
 import { PersonRepository } from '@/infrastructure/repositories/person.repository';
 import { YoutubeVideoRepository } from '@/infrastructure/repositories/youtube-video.repository';
+import { serializePieceWithRelations } from '@/domain/piece';
 import { PieceDetailClient } from './PieceDetailClient';
 
 interface Props {
@@ -31,11 +32,11 @@ export default async function PieceDetailPage({ params }: Props) {
   return (
     <MainLayout>
       <PieceDetailClient
-        piece={piece}
-        composer={composer}
-        arranger={arranger}
-        childPieces={childPieces}
-        videos={videos}
+        piece={serializePieceWithRelations(piece)}
+        composer={composer?.toSerializable() ?? null}
+        arranger={arranger?.toSerializable() ?? null}
+        childPieces={childPieces.map((p) => p.toSerializable())}
+        videos={videos.map((v) => v.toSerializable())}
       />
     </MainLayout>
   );

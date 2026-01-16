@@ -8,7 +8,7 @@ export default async function PieceSearchPage() {
 
   return (
     <MainLayout>
-      <PieceSearchClient availableTags={tags} />
+      <PieceSearchClient availableTags={tags.map((t) => t.toSerializable())} />
     </MainLayout>
   );
 }

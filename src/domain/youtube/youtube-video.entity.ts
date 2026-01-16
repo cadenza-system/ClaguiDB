@@ -1,5 +1,14 @@
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
+export interface SerializedYoutubeVideo {
+  id: number;
+  pieceId: number;
+  url: string;
+  approvalStatus: ApprovalStatus;
+  createdAt: string;
+  createdByUserId: number;
+}
+
 export class YoutubeVideo {
   constructor(
     public readonly id: number,
@@ -9,6 +18,17 @@ export class YoutubeVideo {
     public readonly createdAt: Date,
     public readonly createdByUserId: number
   ) {}
+
+  toSerializable(): SerializedYoutubeVideo {
+    return {
+      id: this.id,
+      pieceId: this.pieceId,
+      url: this.url,
+      approvalStatus: this.approvalStatus,
+      createdAt: this.createdAt.toISOString(),
+      createdByUserId: this.createdByUserId,
+    };
+  }
 
   isApproved(): boolean {
     return this.approvalStatus === 'approved';

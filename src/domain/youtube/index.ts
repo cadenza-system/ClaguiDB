@@ -1,4 +1,8 @@
-export { YoutubeVideo, type ApprovalStatus } from './youtube-video.entity';
+export {
+  YoutubeVideo,
+  type ApprovalStatus,
+  type SerializedYoutubeVideo,
+} from './youtube-video.entity';
 export type {
   CreateYoutubeVideoInput,
   YoutubeVideoSearchCriteria,

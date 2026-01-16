@@ -3,6 +3,13 @@ import { ITagRepository } from '@/domain/tag/tag.repository.interface';
 import { Tag } from '@/domain/tag/tag.entity';
 import { TagId, CreateTagInput } from '@/domain/tag/tag.types';
 
+type TagModel = {
+  id: number;
+  name: string;
+  createdAt: Date;
+  createdByUserId: number;
+};
+
 export class TagRepository implements ITagRepository {
   async findById(id: TagId): Promise<Tag | null> {
     const tag = await prisma.tag.findUnique({
@@ -28,7 +35,7 @@ export class TagRepository implements ITagRepository {
       orderBy: { name: 'asc' },
     });
 
-    return tags.map((t) => this.toDomain(t));
+    return tags.map((t: TagModel) => this.toDomain(t));
   }
 
   async create(input: CreateTagInput): Promise<Tag> {
@@ -52,12 +59,7 @@ export class TagRepository implements ITagRepository {
     });
   }
 
-  private toDomain(prismaModel: {
-    id: number;
-    name: string;
-    createdAt: Date;
-    createdByUserId: number;
-  }): Tag {
+  private toDomain(prismaModel: TagModel): Tag {
     return new Tag(
       prismaModel.id,
       prismaModel.name,

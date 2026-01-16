@@ -1,4 +1,5 @@
 export { Person } from './person.entity';
+export type { SerializedPerson } from './person.entity';
 export type {
   PersonId,
   CreatePersonInput,

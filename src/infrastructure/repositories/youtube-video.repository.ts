@@ -3,6 +3,15 @@ import { IYoutubeVideoRepository } from '@/domain/youtube/youtube-video.reposito
 import { YoutubeVideo, ApprovalStatus } from '@/domain/youtube/youtube-video.entity';
 import { CreateYoutubeVideoInput } from '@/domain/youtube/youtube-video.types';
 
+type YoutubeVideoModel = {
+  id: number;
+  pieceId: number;
+  url: string;
+  approvalStatus: string;
+  createdAt: Date;
+  createdByUserId: number;
+};
+
 export class YoutubeVideoRepository implements IYoutubeVideoRepository {
   async findById(id: number): Promise<YoutubeVideo | null> {
     const video = await prisma.youtubeVideo.findUnique({
@@ -26,7 +35,7 @@ export class YoutubeVideoRepository implements IYoutubeVideoRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return videos.map((v) => this.toDomain(v));
+    return videos.map((v: YoutubeVideoModel) => this.toDomain(v));
   }
 
   async findPending(): Promise<YoutubeVideo[]> {
@@ -35,7 +44,7 @@ export class YoutubeVideoRepository implements IYoutubeVideoRepository {
       orderBy: { createdAt: 'asc' },
     });
 
-    return videos.map((v) => this.toDomain(v));
+    return videos.map((v: YoutubeVideoModel) => this.toDomain(v));
   }
 
   async create(input: CreateYoutubeVideoInput): Promise<YoutubeVideo> {
@@ -84,14 +93,7 @@ export class YoutubeVideoRepository implements IYoutubeVideoRepository {
     });
   }
 
-  private toDomain(prismaModel: {
-    id: number;
-    pieceId: number;
-    url: string;
-    approvalStatus: string;
-    createdAt: Date;
-    createdByUserId: number;
-  }): YoutubeVideo {
+  private toDomain(prismaModel: YoutubeVideoModel): YoutubeVideo {
     return new YoutubeVideo(
       prismaModel.id,
       prismaModel.pieceId,

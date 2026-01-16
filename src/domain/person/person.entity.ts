@@ -1,3 +1,14 @@
+export interface SerializedPerson {
+  id: number;
+  names: string[];
+  bio: string | null;
+  birthYear: number | null;
+  deathYear: number | null;
+  country: string | null;
+  createdAt: string;
+  createdByUserId: number;
+}
+
 export class Person {
   constructor(
     public readonly id: number,
@@ -9,6 +20,19 @@ export class Person {
     public readonly createdAt: Date,
     public readonly createdByUserId: number
   ) {}
+
+  toSerializable(): SerializedPerson {
+    return {
+      id: this.id,
+      names: this.names,
+      bio: this.bio,
+      birthYear: this.birthYear,
+      deathYear: this.deathYear,
+      country: this.country,
+      createdAt: this.createdAt.toISOString(),
+      createdByUserId: this.createdByUserId,
+    };
+  }
 
   getJapaneseMainName(): string | null {
     const japaneseNames = this.names

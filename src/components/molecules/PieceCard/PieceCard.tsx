@@ -1,11 +1,33 @@
 'use client';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import NextLink from 'next/link';
-import { Piece } from '@/domain/piece';
+import { SerializedPiece } from '@/domain/piece';
 import { TagChip } from '../TagChip';
 
+function isJapanese(text: string): boolean {
+  return /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
+}
+
+function getJapaneseMainName(names: string[]): string | null {
+  const japaneseNames = names.filter((name) => isJapanese(name)).sort();
+  return japaneseNames[0] || null;
+}
+
+function getEnglishMainName(names: string[]): string | null {
+  const englishNames = names.filter((name) => !isJapanese(name)).sort();
+  return englishNames[0] || null;
+}
+
+function getMainName(names: string[], language: 'ja' | 'en'): string {
+  const mainName =
+    language === 'ja'
+      ? getJapaneseMainName(names)
+      : getEnglishMainName(names);
+  return mainName || names[0] || '';
+}
+
 export interface PieceCardProps {
-  piece: Piece;
+  piece: SerializedPiece;
   language: 'ja' | 'en';
   composerName?: string;
   arrangerName?: string;
@@ -17,11 +39,11 @@ export const PieceCard: React.FC<PieceCardProps> = ({
   composerName,
   arrangerName,
 }) => {
-  const mainName = piece.getMainName(language);
+  const mainName = getMainName(piece.names, language);
   const subName =
     language === 'ja'
-      ? piece.getEnglishMainName()
-      : piece.getJapaneseMainName();
+      ? getEnglishMainName(piece.names)
+      : getJapaneseMainName(piece.names);
 
   return (
     <Card

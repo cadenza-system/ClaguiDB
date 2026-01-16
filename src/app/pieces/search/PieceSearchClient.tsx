@@ -14,17 +14,17 @@ import {
 } from '@mui/material';
 import { SearchForm } from '@/components/molecules/SearchForm';
 import { PieceCard } from '@/components/molecules/PieceCard';
-import { Piece } from '@/domain/piece';
-import { Tag } from '@/domain/tag';
+import { SerializedPiece } from '@/domain/piece';
+import { SerializedTag } from '@/domain/tag';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface PieceSearchClientProps {
-  availableTags: Tag[];
+  availableTags: SerializedTag[];
 }
 
 export function PieceSearchClient({ availableTags }: PieceSearchClientProps) {
   const { language } = useLanguage();
-  const [results, setResults] = useState<Piece[]>([]);
+  const [results, setResults] = useState<SerializedPiece[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
@@ -43,36 +43,7 @@ export function PieceSearchClient({ availableTags }: PieceSearchClientProps) {
 
       const res = await fetch(`/api/pieces/search?${params.toString()}`);
       const data = await res.json();
-      setResults(
-        data.map(
-          (p: {
-            id: number;
-            names: string[];
-            composerId: number;
-            arrangerId: number | null;
-            parentPieceId: number | null;
-            compositionYear: number | null;
-            sheetMusicInfo: string | null;
-            createdAt: string;
-            createdByUserId: number;
-            tags: string[];
-            favoriteCount: number;
-          }) =>
-            new Piece(
-              p.id,
-              p.names,
-              p.composerId,
-              p.arrangerId,
-              p.parentPieceId,
-              p.compositionYear,
-              p.sheetMusicInfo,
-              new Date(p.createdAt),
-              p.createdByUserId,
-              p.tags,
-              p.favoriteCount
-            )
-        )
-      );
+      setResults(data as SerializedPiece[]);
     } catch (error) {
       console.error('Search error:', error);
     } finally {

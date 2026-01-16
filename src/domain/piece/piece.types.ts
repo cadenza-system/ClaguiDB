@@ -40,3 +40,27 @@ export interface PieceWithRelations {
   favoriteCount: number;
   createdAt: Date;
 }
+
+export interface SerializedPieceWithRelations {
+  id: number;
+  names: string[];
+  composerId: number;
+  composerNames: string[];
+  arrangerId: number | null;
+  arrangerNames: string[] | null;
+  parentPieceId: number | null;
+  compositionYear: number | null;
+  sheetMusicInfo: string | null;
+  tags: { id: number; name: string }[];
+  favoriteCount: number;
+  createdAt: string;
+}
+
+export function serializePieceWithRelations(
+  piece: PieceWithRelations
+): SerializedPieceWithRelations {
+  return {
+    ...piece,
+    createdAt: piece.createdAt.toISOString(),
+  };
+}

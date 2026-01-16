@@ -9,6 +9,25 @@ import {
   PieceWithRelations,
 } from '@/domain/piece/piece.types';
 
+type PieceModel = {
+  id: number;
+  composerId: number;
+  arrangerId: number | null;
+  parentPieceId: number | null;
+  compositionYear: number | null;
+  sheetMusicInfo: string | null;
+  createdAt: Date;
+  createdByUserId: number;
+  pieceNames: { name: string }[];
+  pieceTags: { tag: { id: number; name: string } }[];
+  _count: { favorites: number };
+};
+
+type PieceWithRelationsModel = PieceModel & {
+  composer: { personNames: { name: string }[] };
+  arranger: { personNames: { name: string }[] } | null;
+};
+
 export class PieceRepository implements IPieceRepository {
   async findById(id: PieceId): Promise<Piece | null> {
     const piece = await prisma.piece.findUnique({
@@ -52,19 +71,23 @@ export class PieceRepository implements IPieceRepository {
 
     if (!piece) return null;
 
+    const p = piece as PieceWithRelationsModel;
     return {
-      id: piece.id,
-      names: piece.pieceNames.map((pn) => pn.name),
-      composerId: piece.composerId,
-      composerNames: piece.composer.personNames.map((pn) => pn.name),
-      arrangerId: piece.arrangerId,
-      arrangerNames: piece.arranger?.personNames.map((pn) => pn.name) || null,
-      parentPieceId: piece.parentPieceId,
-      compositionYear: piece.compositionYear,
-      sheetMusicInfo: piece.sheetMusicInfo,
-      tags: piece.pieceTags.map((pt) => ({ id: pt.tag.id, name: pt.tag.name })),
-      favoriteCount: piece._count.favorites,
-      createdAt: piece.createdAt,
+      id: p.id,
+      names: p.pieceNames.map((pn: { name: string }) => pn.name),
+      composerId: p.composerId,
+      composerNames: p.composer.personNames.map((pn: { name: string }) => pn.name),
+      arrangerId: p.arrangerId,
+      arrangerNames: p.arranger?.personNames.map((pn: { name: string }) => pn.name) || null,
+      parentPieceId: p.parentPieceId,
+      compositionYear: p.compositionYear,
+      sheetMusicInfo: p.sheetMusicInfo,
+      tags: p.pieceTags.map((pt: { tag: { id: number; name: string } }) => ({
+        id: pt.tag.id,
+        name: pt.tag.name,
+      })),
+      favoriteCount: p._count.favorites,
+      createdAt: p.createdAt,
     };
   }
 
@@ -105,7 +128,7 @@ export class PieceRepository implements IPieceRepository {
       skip: criteria.offset,
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async findByComposerId(composerId: number): Promise<Piece[]> {
@@ -123,7 +146,7 @@ export class PieceRepository implements IPieceRepository {
       },
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async findByArrangerId(arrangerId: number): Promise<Piece[]> {
@@ -141,7 +164,7 @@ export class PieceRepository implements IPieceRepository {
       },
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async findChildPieces(parentPieceId: number): Promise<Piece[]> {
@@ -159,7 +182,7 @@ export class PieceRepository implements IPieceRepository {
       },
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async findRecent(limit: number): Promise<Piece[]> {
@@ -179,7 +202,7 @@ export class PieceRepository implements IPieceRepository {
       take: limit,
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async findPopular(limit: number): Promise<Piece[]> {
@@ -201,7 +224,7 @@ export class PieceRepository implements IPieceRepository {
       take: limit,
     });
 
-    return pieces.map((p) => this.toDomain(p));
+    return pieces.map((p: PieceModel) => this.toDomain(p));
   }
 
   async create(input: CreatePieceInput): Promise<Piece> {
@@ -292,22 +315,10 @@ export class PieceRepository implements IPieceRepository {
     });
   }
 
-  private toDomain(prismaModel: {
-    id: number;
-    composerId: number;
-    arrangerId: number | null;
-    parentPieceId: number | null;
-    compositionYear: number | null;
-    sheetMusicInfo: string | null;
-    createdAt: Date;
-    createdByUserId: number;
-    pieceNames: { name: string }[];
-    pieceTags: { tag: { name: string } }[];
-    _count: { favorites: number };
-  }): Piece {
+  private toDomain(prismaModel: PieceModel): Piece {
     return new Piece(
       prismaModel.id,
-      prismaModel.pieceNames.map((pn) => pn.name),
+      prismaModel.pieceNames.map((pn: { name: string }) => pn.name),
       prismaModel.composerId,
       prismaModel.arrangerId,
       prismaModel.parentPieceId,
@@ -315,7 +326,7 @@ export class PieceRepository implements IPieceRepository {
       prismaModel.sheetMusicInfo,
       prismaModel.createdAt,
       prismaModel.createdByUserId,
-      prismaModel.pieceTags.map((pt) => pt.tag.name),
+      prismaModel.pieceTags.map((pt: { tag: { id: number; name: string } }) => pt.tag.name),
       prismaModel._count.favorites
     );
   }
